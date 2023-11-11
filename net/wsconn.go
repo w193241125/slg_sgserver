@@ -19,7 +19,7 @@ type RspBody struct {
 // WsMsgReq websocket 请求体格式
 type WsMsgReq struct {
 	Body *ReqBody
-	conn WSConn
+	Conn WSConn
 }
 
 type WsMsgRsp struct {

@@ -22,7 +22,8 @@ func (g *Group) AddRouter(name string, handlerFunc HandlerFunc) {
 // Group 路由中的分组
 func (r *Router) Group(prefix string) *Group {
 	g := &Group{
-		prefix: prefix,
+		prefix:     prefix,
+		handlerMap: make(map[string]HandlerFunc),
 	}
 	r.group = append(r.group, g)
 
