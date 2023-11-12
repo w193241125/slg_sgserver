@@ -1,6 +1,9 @@
 package net
 
-import "strings"
+import (
+	"log"
+	"strings"
+)
 
 type HandlerFunc func(req *WsMsgReq, rsp *WsMsgRsp)
 
@@ -35,6 +38,13 @@ func (g *Group) exec(name string, req *WsMsgReq, rsp *WsMsgRsp) {
 	h := g.handlerMap[name]
 	if h != nil {
 		h(req, rsp)
+	} else {
+		h = g.handlerMap["*"]
+		if h != nil {
+			h(req, rsp)
+		} else {
+			log.Println("路由未定义!")
+		}
 	}
 }
 
@@ -52,6 +62,8 @@ func (r *Router) Run(req *WsMsgReq, rsp *WsMsgRsp) {
 	//遍历所有组, 匹配请求中的组标识.
 	for _, g := range r.group {
 		if g.prefix == prefix {
+			g.exec(name, req, rsp)
+		} else if g.prefix == "*" {
 			g.exec(name, req, rsp)
 		}
 	}
