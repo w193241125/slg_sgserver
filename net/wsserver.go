@@ -2,6 +2,7 @@ package net
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
@@ -42,7 +43,11 @@ func (w *WsServer) SetProperty(key string, value interface{}) {
 func (w *WsServer) GetProperty(key string) (interface{}, error) {
 	w.propertyLock.RLock()
 	defer w.propertyLock.RUnlock()
-	return w.property[key], nil
+	if value, ok := w.property[key]; ok {
+		return value, nil
+	} else {
+		return nil, errors.New("property no found")
+	}
 }
 
 func (w *WsServer) RemoveProperty(key string) {
@@ -68,7 +73,7 @@ func (w *WsServer) Start() {
 
 // Write 写消息
 func (w *WsServer) Write(msg *WsMsgRsp) {
-	data, err := json.Marshal(msg)
+	data, err := json.Marshal(msg.Body)
 	if err != nil {
 		log.Println(err)
 	}
@@ -112,7 +117,7 @@ func (w *WsServer) readMsgLoop() {
 	for {
 		_, data, err := w.wsConn.ReadMessage()
 		if err != nil {
-			log.Println("接收消息出错:", err)
+			log.Println("收消息出错:", err)
 			break
 		}
 		fmt.Println(data)
@@ -129,8 +134,8 @@ func (w *WsServer) readMsgLoop() {
 			key := secretKey.(string)
 			d, err := utils.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
 			if err != nil {
-				log.Println(err)
-				//w.Handshake()
+				log.Println("数据格式有误，解密失败:", err)
+				w.Handshake()
 			} else {
 				data = d
 			}
@@ -155,4 +160,36 @@ func (w *WsServer) readMsgLoop() {
 
 func (w *WsServer) Close() {
 	_ = w.wsConn.Close()
+}
+
+const HandshakeMsg = "handshake"
+
+// Handshake 当客户端发送请求, 会先进行握手协议
+// 后端会发送对应的加密key给客户端.
+// 客户端再在发送数据的时候,用这个key解密请求.
+func (w *WsServer) Handshake() {
+	secretKey := ""
+	key, err := w.GetProperty("secretKey")
+	if err == nil {
+		secretKey = key.(string)
+	} else {
+		secretKey = utils.RandSeq(16)
+	}
+	handshake := &Handshake{Key: secretKey}
+
+	body := &RspBody{Name: HandshakeMsg, Msg: handshake}
+
+	if data, err := json.Marshal(body); err == nil {
+		if secretKey != "" {
+			w.SetProperty("secretKey", secretKey)
+		} else {
+			w.RemoveProperty("secretKey")
+		}
+		if data, err := utils.Zip(data); err == nil {
+			err := w.wsConn.WriteMessage(websocket.BinaryMessage, data)
+			if err != nil {
+				log.Println("write msg err:", err)
+			}
+		}
+	}
 }

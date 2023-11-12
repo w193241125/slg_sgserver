@@ -44,7 +44,7 @@ func (s *Server) wsHandler(w http.ResponseWriter, r *http.Request) {
 	wsConn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		// 打印日志,同时会退出应用程序
-		log.Fatal("websocket 服务连接出错", err)
+		log.Println("websocket 服务连接出错", err)
 	}
 	log.Println("websocket 服务连接成功")
 	//fmt.Println("websocket 服务连接成功")
@@ -55,9 +55,5 @@ func (s *Server) wsHandler(w http.ResponseWriter, r *http.Request) {
 	wsServer := NewWsServer(wsConn)
 	wsServer.Router(s.router)
 	wsServer.Start()
-
-	err = wsConn.WriteMessage(websocket.BinaryMessage, []byte("hello"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	wsServer.Handshake()
 }

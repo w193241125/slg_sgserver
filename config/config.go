@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Unknwon/goconfig"
 	"log"
 	"os"
@@ -39,11 +38,6 @@ func init() {
 	if err != nil {
 		log.Fatal("读取配置文件出错:", err)
 	}
-	fmt.Println(File)
-}
-
-func A() {
-	fmt.Println("AAAA")
 }
 
 func fileExist(fileName string) bool {
