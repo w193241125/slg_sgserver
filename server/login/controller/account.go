@@ -9,6 +9,7 @@ import (
 	"sgserver/net"
 	"sgserver/server/login/model"
 	"sgserver/server/login/proto"
+	"sgserver/server/models"
 	"sgserver/utils"
 	"time"
 )
@@ -37,7 +38,7 @@ func (a *Account) login(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	loginReq := &proto.LoginReq{}
 	loginRes := &proto.LoginRsp{}
 	mapstructure.Decode(req.Body.Msg, loginReq)
-	user := &model.User{}
+	user := &models.User{}
 	get, err := db.Engine.Table(user).Where("username=?", loginReq.Username).Get(user)
 	if err != nil {
 		log.Println("用户表查询出错", err)
