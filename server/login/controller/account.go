@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"log"
 	"sgserver/constant"
@@ -44,8 +43,8 @@ func (a *Account) login(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		log.Println("用户表查询出错", err)
 		return
 	}
-	fmt.Println(loginReq.Username)
-	fmt.Println(get)
+	//fmt.Println(loginReq.Username)
+	//fmt.Println(get)
 	if !get {
 		rsp.Body.Code = constant.UserNotExist
 		return
@@ -77,9 +76,9 @@ func (a *Account) login(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 
 	//最后一次登录状态记录
 	ll := &model.LoginLast{}
-	println(user.UId)
+	//println(user.UId)
 	get, _ = db.Engine.Table(ll).Where("uid=?", user.UId).Get(ll)
-	fmt.Println(get)
+	//fmt.Println(get)
 	if get {
 		ll.IsLogout = 0
 		ll.Ip = loginReq.Ip

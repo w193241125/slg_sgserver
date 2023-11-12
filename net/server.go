@@ -46,7 +46,7 @@ func (s *Server) wsHandler(w http.ResponseWriter, r *http.Request) {
 		// 打印日志,同时会退出应用程序
 		log.Println("websocket 服务连接出错", err)
 	}
-	log.Println("websocket 服务连接成功")
+	//log.Println("websocket 服务连接成功")
 	//fmt.Println("websocket 服务连接成功")
 	//websocket 通道建立之后,不管是客服端还是服务端,都可以收发消息
 	//发消息的时候,把消息当做路由来去处理, 消息是有格式的,先定义消息格式

@@ -25,8 +25,8 @@ func init() {
 	}
 
 	//构建后启动时添加配置目录 sgserver.exe  M:/sgserver/conf/conf.ini
-	len := len(os.Args)
-	if len > 1 {
+	lens := len(os.Args)
+	if lens > 1 {
 		dir := os.Args[1]
 		if dir != "" {
 			configPath = dir + configFile
