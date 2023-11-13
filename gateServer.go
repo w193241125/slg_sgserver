@@ -22,6 +22,7 @@ func main() {
 	port := config.File.MustValue("gate_server", "port", "8004")
 
 	s := net.NewServer(host + ":" + port)
+	s.NeedSecret(true)
 	gate.Init()
 	s.Router(gate.Router)
 	s.Start()

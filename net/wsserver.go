@@ -3,12 +3,13 @@ package net
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 	"log"
 	"sgserver/utils"
 	"sync"
+	"time"
 )
 
 // WsServer websocket 服务
@@ -19,15 +20,27 @@ type WsServer struct {
 	Seq          int64
 	property     map[string]interface{}
 	propertyLock sync.RWMutex
+	needSecret   bool
 }
 
-func NewWsServer(wsConn *websocket.Conn) *WsServer {
-	return &WsServer{
-		wsConn:   wsConn,
-		outChan:  make(chan *WsMsgRsp, 1000),
-		property: make(map[string]interface{}),
-		Seq:      0,
+var cid int64
+
+func NewWsServer(wsConn *websocket.Conn, needSecret bool) *WsServer {
+	s := &WsServer{
+		wsConn:     wsConn,
+		outChan:    make(chan *WsMsgRsp, 1000),
+		property:   make(map[string]interface{}),
+		Seq:        0,
+		needSecret: needSecret,
 	}
+
+	cid++
+	s.SetProperty("cid", cid)
+	return s
+}
+
+func (w *WsServer) NeedSecret(needSecret bool) {
+	w.needSecret = needSecret
 }
 
 func (w *WsServer) Router(router *Router) {
@@ -71,9 +84,20 @@ func (w *WsServer) Start() {
 	go w.writeMsgLoop()
 }
 
+// 监控是否需要写消息
+func (w *WsServer) writeMsgLoop() {
+
+	for {
+		select {
+		case msg := <-w.outChan:
+			w.Write(msg.Body)
+		}
+	}
+}
+
 // Write 写消息
-func (w *WsServer) Write(msg *WsMsgRsp) {
-	data, err := json.Marshal(msg.Body)
+func (w *WsServer) Write(msg interface{}) {
+	data, err := json.Marshal(msg)
 	if err != nil {
 		log.Println(err)
 	}
@@ -82,26 +106,17 @@ func (w *WsServer) Write(msg *WsMsgRsp) {
 		//有加密
 		key := secretKey.(string)
 		//数据做加密
-		data, _ = utils.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
-		//数据压缩
-		if data, err := utils.Zip(data); err != nil {
-			err := w.wsConn.WriteMessage(websocket.BinaryMessage, data)
-			if err != nil {
-				log.Println(err)
-			}
-		}
+		data, _ = utils.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
+
 	}
-}
-
-// 监控是否需要写消息
-func (w *WsServer) writeMsgLoop() {
-
-	for {
-		select {
-		case msg := <-w.outChan:
-			fmt.Println(msg)
-			w.Write(msg)
+	//数据压缩
+	if data, err := utils.Zip(data); err == nil {
+		err := w.wsConn.WriteMessage(websocket.BinaryMessage, data)
+		if err != nil {
+			log.Println("服务端写数据出错", err)
 		}
+		d, _ := json.Marshal(msg)
+		log.Println("服务端写数据", string(d))
 	}
 }
 
@@ -110,17 +125,17 @@ func (w *WsServer) readMsgLoop() {
 	// 经过路由, 实际处理程序
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println(err)
+			log.Println("wsserver readmsgLoop 异常", err)
 			w.Close()
 		}
 	}()
 	for {
 		_, data, err := w.wsConn.ReadMessage()
 		if err != nil {
-			log.Println("收消息出错:", err)
+			log.Println("wsserver收消息出错:", err)
 			break
 		}
-		fmt.Println(data)
+		//fmt.Println(data)
 		//前端发送过来的消息就是JSON格式
 		//1. data 解压 unzip
 		data, err = utils.UnZip(data)
@@ -129,6 +144,7 @@ func (w *WsServer) readMsgLoop() {
 			continue
 		}
 		//2. 前端消息是加密的,需要解密
+		//if w.needSecret {
 		secretKey, err := w.GetProperty("secretKey")
 		if err == nil {
 			key := secretKey.(string)
@@ -140,6 +156,8 @@ func (w *WsServer) readMsgLoop() {
 				data = d
 			}
 		}
+		//}
+
 		//3. data 转为body
 		body := &ReqBody{}
 		err = json.Unmarshal(data, body)
@@ -149,13 +167,23 @@ func (w *WsServer) readMsgLoop() {
 			//获取到前端传递的数据, 去具体业务处理.
 			req := &WsMsgReq{Conn: w, Body: body}
 			rsp := &WsMsgRsp{Body: &RspBody{Name: body.Name, Seq: req.Body.Seq}}
-			w.router.Run(req, rsp)
+			if req.Body.Name == "heartbeat" {
+				//回心跳消息
+				h := &Heartbeat{}
+				mapstructure.Decode(req.Body.Msg, h)
+				h.STime = time.Now().UnixNano() / 1e6
+				rsp.Body.Msg = h
+			} else {
+				if w.router != nil {
+					w.router.Run(req, rsp)
+				}
+
+			}
+
 			w.outChan <- rsp
 		}
 	}
 	w.Close()
-	//rsp := &WsMsgRsp{Body: &RspBody{Name: name, Msg: data, Seq: 0}}
-	//w.outChan <- rsp
 }
 
 func (w *WsServer) Close() {

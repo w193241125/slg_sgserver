@@ -12,5 +12,5 @@ func Init() {
 }
 
 func initRouter() {
-	controller.GateHander.Router(Router)
+	controller.GateHandler.Router(Router)
 }

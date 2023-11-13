@@ -7,8 +7,9 @@ import (
 )
 
 type Server struct {
-	addr   string
-	router *Router
+	addr       string
+	router     *Router
+	needSecret bool
 }
 
 func NewServer(addr string) *Server {
@@ -17,6 +18,9 @@ func NewServer(addr string) *Server {
 	}
 }
 
+func (s *Server) NeedSecret(needSecret bool) {
+	s.needSecret = needSecret
+}
 func (s *Server) Router(router *Router) {
 	s.router = router
 }
@@ -52,7 +56,7 @@ func (s *Server) wsHandler(w http.ResponseWriter, r *http.Request) {
 	//发消息的时候,把消息当做路由来去处理, 消息是有格式的,先定义消息格式
 	//客户端 发消息 {Name: "account.login"} 收到之后,进行解析,知道是要处理登录逻辑
 
-	wsServer := NewWsServer(wsConn)
+	wsServer := NewWsServer(wsConn, true)
 	wsServer.Router(s.router)
 	wsServer.Start()
 	wsServer.Handshake()
