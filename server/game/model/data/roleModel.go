@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Role struct {
+type RoleModel struct {
 	RId        int       `xorm:"rid pk autoincr"`
 	UId        int       `xorm:"uid"`
 	NickName   string    `xorm:"nick_name" validate:"min=4,max=20,regexp=^[a-zA-Z0-9_]*$"`
@@ -18,7 +18,7 @@ type Role struct {
 	CreatedAt  time.Time `xorm:"created_at"`
 }
 
-func (r *Role) ToModel() interface{} {
+func (r *RoleModel) ToModel() interface{} {
 	m := model.Role{}
 	m.UId = r.UId
 	m.RId = r.RId
@@ -30,6 +30,6 @@ func (r *Role) ToModel() interface{} {
 	return m
 }
 
-func (r *Role) TableName() string {
+func (r *RoleModel) TableName() string {
 	return "role"
 }

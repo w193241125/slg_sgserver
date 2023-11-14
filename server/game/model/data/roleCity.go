@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type MapRoleCity struct {
+type RoleCity struct {
 	mutex      sync.Mutex `xorm:"-"`
 	CityId     int        `xorm:"cityId pk autoincr"`
 	RId        int        `xorm:"rid"`
@@ -18,6 +18,6 @@ type MapRoleCity struct {
 	OccupyTime time.Time  `xorm:"occupy_time"`
 }
 
-func (m *MapRoleCity) TableName() string {
+func (m *RoleCity) TableName() string {
 	return "map_role_city"
 }

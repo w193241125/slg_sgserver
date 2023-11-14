@@ -20,13 +20,14 @@ type roleService struct {
 
 func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.WSConn) error {
 	//根据用户ID查询对应的游戏角色..
-	role := &data.Role{}
+	role := &data.RoleModel{}
 	get, err := db.Engine.Table(role).Where("uid=?", uid).Get(role)
 	if err != nil {
 		log.Println("查询角色出错", err)
 		return common.New(constant.DBError, "查询数据库uid出错")
 	}
 	if get {
+		//已经创角了就去查询角色资源
 		rid := role.RId
 		roleRes := &data.RoleRes{}
 		ok, err := db.Engine.Table(roleRes).Where("rid=?", rid).Get(roleRes)
@@ -50,8 +51,8 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 		}
 		rsp.RoleRes = roleRes.ToModel().(model.RoleRes)
 		rsp.Role = role.ToModel().(model.Role)
-		token, _ := utils.Award(16)
 		rsp.Time = time.Now().UnixNano() / 1e6
+		token, _ := utils.Award(rid)
 		rsp.Token = token
 		//将角色信息存入socket中
 		conn.SetProperty("role", role)
@@ -59,8 +60,13 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 		if err := RoleAttrService.TryCreate(rid, conn); err != nil {
 			return common.New(constant.DBError, "尝试创角失败")
 		}
+		//初始化城池
+
+		if err := RoleCityService.InitCity(rid, role.NickName, conn); err != nil {
+			return common.New(constant.DBError, "城池初始化失败")
+		}
 	} else {
-		log.Println("无角色", err)
+		log.Println("无角色,去创角", err)
 		return common.New(constant.RoleNotExist, "角色不存在")
 	}
 	return nil

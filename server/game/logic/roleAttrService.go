@@ -20,12 +20,9 @@ func (r *roleAttrService) TryCreate(rid int, conn net.WSConn) error {
 	get, err := db.Engine.Table(role).Where("rid=?", rid).Get(role)
 	if err != nil {
 		log.Println("查询角色出错", err)
-		return common.New(constant.DBError, "查询数据库uid出错")
+		return common.New(constant.DBError, "查询数据库rid出错")
 	}
-	if get {
-		return nil
-
-	} else {
+	if !get {
 		role.Id = rid
 		role.UnionId = 0
 		role.ParentId = 0

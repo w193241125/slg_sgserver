@@ -111,7 +111,7 @@ func (b *basic) Load() {
 	if err != nil {
 		panic(err)
 	}
-	err = json.Unmarshal(data, Base)
+	err = json.Unmarshal(data, b)
 	if err != nil {
 		panic(err)
 	}
