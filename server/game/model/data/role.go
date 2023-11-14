@@ -18,10 +18,6 @@ type Role struct {
 	CreatedAt  time.Time `xorm:"created_at"`
 }
 
-func (r *Role) TableName() string {
-	return "role"
-}
-
 func (r *Role) ToModel() interface{} {
 	m := model.Role{}
 	m.UId = r.UId
@@ -32,4 +28,8 @@ func (r *Role) ToModel() interface{} {
 	m.Balance = r.Balance
 	m.Profile = r.Profile
 	return m
+}
+
+func (r *Role) TableName() string {
+	return "role"
 }

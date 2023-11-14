@@ -38,3 +38,9 @@ type RoleRes struct {
 	GoldYield     int `json:"gold_yield"`
 	DepotCapacity int `json:"depot_capacity"` //仓库容量
 }
+
+type PosTag struct {
+	X    int    `json:"x"`
+	Y    int    `json:"y"`
+	Name string `json:"name"`
+}
