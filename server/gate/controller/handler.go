@@ -34,6 +34,8 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	proxyStr := ""
 	if isAccount(name) {
 		proxyStr = h.loginProxy
+	} else {
+		proxyStr = h.gameProxy
 	}
 	if proxyStr == "" {
 		rsp.Body.Code = constant.ProxyNotInConnect
