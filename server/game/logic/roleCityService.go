@@ -9,6 +9,7 @@ import (
 	"sgserver/server/common"
 	"sgserver/server/game/gameConfig"
 	"sgserver/server/game/global"
+	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 	"time"
 )
@@ -20,7 +21,7 @@ type roleCityService struct {
 
 func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) error {
 	//根据用户ID查询对应的游戏角色..
-	roleCity := &data.RoleCity{}
+	roleCity := &data.MapRoleCity{}
 	get, err := db.Engine.Table(roleCity).Where("rid=?", rid).Get(roleCity)
 	if err != nil {
 		log.Println("查询角色城池出错", err)
@@ -43,4 +44,20 @@ func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) er
 		}
 	}
 	return nil
+}
+
+func (r *roleCityService) GetRoleCity(rid int) ([]model.MapRoleCity, error) {
+	citys := make([]data.MapRoleCity, 0)
+	city := &data.MapRoleCity{}
+	err := db.Engine.Table(city).Where("rid=?", rid).Find(&citys)
+
+	modelCitys := make([]model.MapRoleCity, len(citys))
+	if err != nil {
+		log.Println("查询角色城池出错", err)
+		return modelCitys, err
+	}
+	for _, v := range citys {
+		modelCitys = append(modelCitys, v.ToModel().(model.MapRoleCity))
+	}
+	return modelCitys, nil
 }

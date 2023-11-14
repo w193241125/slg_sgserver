@@ -71,3 +71,17 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 	}
 	return nil
 }
+
+func (r *roleService) GetRoleRes(rid int) (model.RoleRes, error) {
+	roleRes := &data.RoleRes{}
+	get, err := db.Engine.Table(roleRes).Where("rid=?", rid).Get(roleRes)
+	if err != nil {
+		log.Println("获取角色资源出错", err)
+		return model.RoleRes{}, common.New(constant.DBError, "获取角色资源出错")
+	}
+	if get {
+		return roleRes.ToModel().(model.RoleRes), nil
+	}
+
+	return model.RoleRes{}, common.New(constant.RoleNotExist, "角色资源不存在")
+}
