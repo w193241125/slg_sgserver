@@ -51,7 +51,7 @@ func (r *roleCityService) GetRoleCity(rid int) ([]model.MapRoleCity, error) {
 	city := &data.MapRoleCity{}
 	err := db.Engine.Table(city).Where("rid=?", rid).Find(&citys)
 
-	modelCitys := make([]model.MapRoleCity, len(citys))
+	modelCitys := make([]model.MapRoleCity, 0)
 	if err != nil {
 		log.Println("查询角色城池出错", err)
 		return modelCitys, err

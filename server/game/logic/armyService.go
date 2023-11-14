@@ -17,7 +17,7 @@ func (r *armyService) GetArmys(rid int) ([]model.Army, error) {
 	build := &data.Army{}
 	err := db.Engine.Table(build).Where("rid=?", rid).Find(&builds)
 
-	armys := make([]model.Army, len(builds))
+	armys := make([]model.Army, 0)
 	if err != nil {
 		log.Println("查询军队出错", err)
 		return armys, err

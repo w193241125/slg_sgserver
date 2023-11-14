@@ -17,7 +17,7 @@ func (r *roleBuildService) GetBuilds(rid int) ([]model.MapRoleBuild, error) {
 	build := &data.MapRoleBuild{}
 	err := db.Engine.Table(build).Where("rid=?", rid).Find(&builds)
 
-	modelBuilds := make([]model.MapRoleBuild, len(builds))
+	modelBuilds := make([]model.MapRoleBuild, 0)
 	if err != nil {
 		log.Println("查询建筑出错", err)
 		return modelBuilds, err
