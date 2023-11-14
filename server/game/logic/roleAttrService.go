@@ -23,10 +23,10 @@ func (r *roleAttrService) TryCreate(rid int, conn net.WSConn) error {
 		return common.New(constant.DBError, "查询数据库rid出错")
 	}
 	if !get {
-		role.Id = rid
+		role.RId = rid
 		role.UnionId = 0
 		role.ParentId = 0
-		_, err := db.Engine.Table(role).Insert(role)
+		_, err = db.Engine.Table(role).Insert(role)
 		if err != nil {
 			log.Println("插入初始角色属性失败", err)
 			return common.New(constant.DBError, "插入初始角色属性失败")

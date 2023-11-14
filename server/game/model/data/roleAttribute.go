@@ -15,3 +15,7 @@ type RoleAttribute struct {
 	PosTags         string         `xorm:"pos_tags"`          //位置标记
 	PosTagArray     []model.PosTag `xorm:"-"`                 //上面的位置标记都是存在一条字符串里面, 使用的时候就会转成一个数组来使用. 所以单独拎出来, 做一个模型.代表对应的一块位置(坐标点,名称).
 }
+
+func (r *RoleAttribute) TableName() string {
+	return "role_attribute"
+}
