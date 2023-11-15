@@ -18,9 +18,19 @@ var RoleService = &roleService{}
 type roleService struct {
 }
 
-func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.WSConn) error {
+func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, req *net.WsMsgReq) error {
 	//根据用户ID查询对应的游戏角色..
 	role := &data.RoleModel{}
+	session := db.Engine.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil {
+		log.Println("事务开启出错", err)
+		return common.New(constant.DBError, "数据库出错")
+	}
+
+	req.Context.Set("dbSession", session)
+
 	get, err := db.Engine.Table(role).Where("uid=?", uid).Get(role)
 	if err != nil {
 		log.Println("查询角色出错", err)
@@ -43,7 +53,7 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 			roleRes.Iron = gameConfig.Base.Role.Iron
 			roleRes.Stone = gameConfig.Base.Role.Stone
 			roleRes.Wood = gameConfig.Base.Role.Wood
-			_, err := db.Engine.Table(roleRes).Insert(roleRes)
+			_, err := session.Table(roleRes).Insert(roleRes)
 			if err != nil {
 				log.Println("插入角色资源错误", err)
 				return common.New(constant.DBError, "插入角色资源错误")
@@ -55,19 +65,26 @@ func (r *roleService) EnterServer(uid int, rsp *model.EnterServerRsp, conn net.W
 		token, _ := utils.Award(rid)
 		rsp.Token = token
 		//将角色信息存入socket中
-		conn.SetProperty("role", role)
+		req.Conn.SetProperty("role", role)
 		//初始化玩家属性
-		if err := RoleAttrService.TryCreate(rid, conn); err != nil {
+		if err := RoleAttrService.TryCreate(rid, req); err != nil {
+			session.Rollback()
 			return common.New(constant.DBError, "尝试创角失败")
 		}
 		//初始化城池
 
-		if err := RoleCityService.InitCity(rid, role.NickName, conn); err != nil {
+		if err := RoleCityService.InitCity(rid, role.NickName, req); err != nil {
+			session.Rollback()
 			return common.New(constant.DBError, "城池初始化失败")
 		}
 	} else {
 		log.Println("无角色,去创角", err)
 		return common.New(constant.RoleNotExist, "角色不存在")
+	}
+	err = session.Commit()
+	if err != nil {
+		log.Println("事务提交出错")
+		return common.New(constant.DBError, "事务提交出错")
 	}
 	return nil
 }

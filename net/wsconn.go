@@ -1,5 +1,7 @@
 package net
 
+import "sync"
+
 // ReqBody 请求体格式
 type ReqBody struct {
 	Seq   int64       `json:"seq"`
@@ -18,8 +20,29 @@ type RspBody struct {
 
 // WsMsgReq websocket 请求体格式
 type WsMsgReq struct {
-	Body *ReqBody
-	Conn WSConn
+	Body    *ReqBody
+	Conn    WSConn
+	Context *WsContext
+}
+type WsContext struct {
+	mutex    sync.RWMutex
+	property map[string]interface{}
+}
+
+func (w *WsContext) Set(key string, value interface{}) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	w.property[key] = value
+}
+
+func (w *WsContext) Get(key string) interface{} {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	value, ok := w.property[key]
+	if ok {
+		return value
+	}
+	return nil
 }
 
 type WsMsgRsp struct {

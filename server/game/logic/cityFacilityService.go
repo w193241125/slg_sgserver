@@ -5,9 +5,11 @@ import (
 	"log"
 	"sgserver/constant"
 	"sgserver/db"
+	"sgserver/net"
 	"sgserver/server/common"
 	"sgserver/server/game/gameConfig"
 	"sgserver/server/game/model/data"
+	"xorm.io/xorm"
 )
 
 var CityFacilityService = &cityFacilityService{}
@@ -15,7 +17,7 @@ var CityFacilityService = &cityFacilityService{}
 type cityFacilityService struct {
 }
 
-func (c cityFacilityService) TryCreate(cid, rid int) error {
+func (c cityFacilityService) TryCreate(cid, rid int, req *net.WsMsgReq) error {
 	cf := &data.CityFacility{}
 	ok, err := db.Engine.Table(cf).Where("cityId=?", cid).Get(cf)
 	if err != nil {
@@ -41,7 +43,12 @@ func (c cityFacilityService) TryCreate(cid, rid int) error {
 	}
 	dataJson, _ := json.Marshal(facs)
 	cf.Facilities = string(dataJson)
-	_, err = db.Engine.Table(cf).Insert(cf)
+	if session := req.Context.Get("dbSession"); session != nil {
+		_, err = session.(*xorm.Session).Table(cf).Insert(cf)
+	} else {
+		_, err = db.Engine.Table(cf).Insert(cf)
+	}
+
 	if err != nil {
 		log.Println("城池设施插入出错", err)
 		return err

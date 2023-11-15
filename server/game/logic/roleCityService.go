@@ -12,6 +12,7 @@ import (
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 	"time"
+	"xorm.io/xorm"
 )
 
 var RoleCityService = &roleCityService{}
@@ -19,7 +20,7 @@ var RoleCityService = &roleCityService{}
 type roleCityService struct {
 }
 
-func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) error {
+func (r *roleCityService) InitCity(rid int, nickname string, req *net.WsMsgReq) error {
 	//根据用户ID查询对应的游戏角色..
 	roleCity := &data.MapRoleCity{}
 	get, err := db.Engine.Table(roleCity).Where("rid=?", rid).Get(roleCity)
@@ -27,10 +28,12 @@ func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) er
 		log.Println("查询角色城池出错", err)
 		return common.New(constant.DBError, "查询数据库rid出错")
 	}
-	if !get {
-
+	if get {
+		return nil
+	} else {
 		//城池是否能在这个坐标创建, 需要判断. 系统城池/玩家城池 五格之内不能有玩家.
 		//系统城池
+		session := req.Context.Get("dbSession")
 		for {
 			//初始化
 			roleCity.X = rand.Intn(global.MapWith)
@@ -41,13 +44,17 @@ func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) er
 				roleCity.CurDurable = gameConfig.Base.City.Durable
 				roleCity.CreatedAt = time.Now()
 				roleCity.IsMain = 1
-				_, err := db.Engine.Table(roleCity).Insert(roleCity)
+				if session != nil {
+					_, err = session.(*xorm.Session).Table(roleCity).Insert(roleCity)
+				} else {
+					_, err = db.Engine.Table(roleCity).Insert(roleCity)
+				}
 				if err != nil {
 					log.Println("城池初始化失败", err)
 					return common.New(constant.DBError, "插入城池初始化信息失败")
 				}
 				//初始化城池设施
-				if err := CityFacilityService.TryCreate(roleCity.CityId, rid); err != nil {
+				if err := CityFacilityService.TryCreate(roleCity.CityId, rid, req); err != nil {
 					log.Println("城池设施初始化失败", err)
 					return common.New(err.(common.MyError).Code(), err.Error())
 				}
@@ -55,7 +62,6 @@ func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) er
 			}
 
 		}
-
 	}
 	return nil
 }

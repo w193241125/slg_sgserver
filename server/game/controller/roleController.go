@@ -43,7 +43,7 @@ func (r *RoleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		return
 	}
 	uid := claim.Uid
-	err = logic.RoleService.EnterServer(uid, rspObj, req.Conn)
+	err = logic.RoleService.EnterServer(uid, rspObj, req)
 	if err != nil {
 		rsp.Body.Code = err.(*common.MyError).Code()
 		return

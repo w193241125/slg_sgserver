@@ -10,6 +10,7 @@ import (
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 	"sync"
+	"xorm.io/xorm"
 )
 
 var RoleAttrService = &roleAttrService{
@@ -21,7 +22,7 @@ type roleAttrService struct {
 	mutex sync.RWMutex
 }
 
-func (r *roleAttrService) TryCreate(rid int, conn net.WSConn) error {
+func (r *roleAttrService) TryCreate(rid int, req *net.WsMsgReq) error {
 	//根据用户ID查询对应的游戏角色..
 	role := &data.RoleAttribute{}
 	get, err := db.Engine.Table(role).Where("rid=?", rid).Get(role)
@@ -32,21 +33,27 @@ func (r *roleAttrService) TryCreate(rid int, conn net.WSConn) error {
 	if get {
 		r.mutex.Lock()
 		r.attrs[rid] = role
-		r.mutex.Unlock()
+		defer r.mutex.Unlock()
 		return nil
 	} else {
 		role.RId = rid
 		role.UnionId = 0
 		role.ParentId = 0
 		role.PosTags = ""
-		_, err = db.Engine.Table(role).Insert(role)
+		if session := req.Context.Get("dbSession"); session != nil {
+			_, err = session.(*xorm.Session).Table(role).Insert(role)
+		} else {
+			_, err = db.Engine.Table(role).Insert(role)
+		}
+
 		if err != nil {
 			log.Println("插入初始角色属性失败", err)
 			return common.New(constant.DBError, "插入初始角色属性失败")
 		}
 		r.mutex.Lock()
+		defer r.mutex.Unlock()
 		r.attrs[rid] = role
-		r.mutex.Unlock()
+
 	}
 	return nil
 }

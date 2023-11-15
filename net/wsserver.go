@@ -165,7 +165,10 @@ func (w *WsServer) readMsgLoop() {
 			log.Println("数据格式有误, 非法格式:", err)
 		} else {
 			//获取到前端传递的数据, 去具体业务处理.
-			req := &WsMsgReq{Conn: w, Body: body}
+			context := &WsContext{
+				property: make(map[string]interface{}),
+			}
+			req := &WsMsgReq{Conn: w, Body: body, Context: context}
 			rsp := &WsMsgRsp{Body: &RspBody{Name: body.Name, Seq: req.Body.Seq}}
 			if req.Body.Name == "heartbeat" {
 				//回心跳消息
@@ -175,6 +178,7 @@ func (w *WsServer) readMsgLoop() {
 				rsp.Body.Msg = h
 			} else {
 				if w.router != nil {
+					log.Println("路由执行", req)
 					w.router.Run(req, rsp)
 				}
 
