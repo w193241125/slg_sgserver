@@ -47,7 +47,10 @@ func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) er
 					return common.New(constant.DBError, "插入城池初始化信息失败")
 				}
 				//初始化城池设施
-
+				if err := CityFacilityService.TryCreate(roleCity.CityId, rid); err != nil {
+					log.Println("城池设施初始化失败", err)
+					return common.New(err.(common.MyError).Code(), err.Error())
+				}
 				break
 			}
 
