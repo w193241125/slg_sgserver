@@ -40,13 +40,6 @@ type RoleRes struct {
 	DepotCapacity int `json:"depot_capacity"` //仓库容量
 }
 
-// 位置标记
-type PosTag struct {
-	X    int    `json:"x"`
-	Y    int    `json:"y"`
-	Name string `json:"name"`
-}
-
 // 武将技能
 type GSkill struct {
 	ID    int `json:"id"`
@@ -142,4 +135,15 @@ type Army struct {
 	ToY      int     `json:"to_y"`
 	Start    int64   `json:"start"` //出征开始时间
 	End      int64   `json:"end"`   //出征结束时间
+}
+
+// 标记位置
+type PosTagListRsp struct {
+	PosTags []PosTag `json:"pos_tags"`
+}
+
+type PosTag struct {
+	X    int    `json:"x"`
+	Y    int    `json:"y"`
+	Name string `json:"name"`
 }
