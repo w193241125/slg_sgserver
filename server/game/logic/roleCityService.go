@@ -46,8 +46,11 @@ func (r *roleCityService) InitCity(rid int, nickname string, conn net.WSConn) er
 					log.Println("城池初始化失败", err)
 					return common.New(constant.DBError, "插入城池初始化信息失败")
 				}
+				//初始化城池设施
+
 				break
 			}
+
 		}
 
 	}
@@ -73,6 +76,7 @@ func IsCanBuild(x int, y int) bool {
 		}
 
 	}
+
 	return true
 }
 

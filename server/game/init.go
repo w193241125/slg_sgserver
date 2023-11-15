@@ -17,6 +17,8 @@ func Init() {
 	gameConfig.MapBuildConf.Load()
 	//加载地图单元格配置
 	gameConfig.MapRes.Load()
+	//加载城池设施配置
+	gameConfig.FacilityConf.Load()
 	InitRouter()
 }
 

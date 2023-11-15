@@ -100,8 +100,8 @@ func (b *basic) Load() {
 	}
 	configPath := currentDir + basicFile
 
-	len := len(os.Args)
-	if len > 1 {
+	lens := len(os.Args)
+	if lens > 1 {
 		dir := os.Args[1]
 		if dir != "" {
 			configPath = dir + basicFile
