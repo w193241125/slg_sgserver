@@ -5,6 +5,7 @@ import (
 	"sgserver/net"
 	"sgserver/server/game/controller"
 	"sgserver/server/game/gameConfig"
+	"sgserver/server/game/gameConfig/general"
 )
 
 var Router = &net.Router{}
@@ -19,10 +20,14 @@ func Init() {
 	gameConfig.MapRes.Load()
 	//加载城池设施配置
 	gameConfig.FacilityConf.Load()
+	//加载武将信息
+	general.General.Load()
+
 	InitRouter()
 }
 
 func InitRouter() {
 	controller.DefaultRoleController.Router(Router)
 	controller.DefaultNationMapController.Router(Router)
+	controller.DefaultGeneralController.Router(Router)
 }

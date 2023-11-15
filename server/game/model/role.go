@@ -147,3 +147,6 @@ type PosTag struct {
 	Y    int    `json:"y"`
 	Name string `json:"name"`
 }
+type MyGeneralRsp struct {
+	Generals []General `json:"generals"`
+}
