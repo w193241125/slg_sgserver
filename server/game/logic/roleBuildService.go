@@ -89,6 +89,8 @@ func (r *roleBuildService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleBu
 	if x < 0 || x >= global.MapWith || y < 0 || y >= global.MapHeight {
 		return mrbs, nil
 	}
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
 	maxX := utils.MinInt(global.MapWith, x+length-1)
 	maxY := utils.MinInt(global.MapHeight, y+length-1)
 	for i := x - length; i <= maxX; i++ {

@@ -53,12 +53,14 @@ func (n *nationMapController) scanBlock(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	rsp.Body.Name = req.Body.Name
 	rsp.Body.Code = constant.OK
 
+	//扫描玩家建筑
 	mrb, err := logic.RoleBuildService.ScanBlock(reqObj)
 	if err != nil {
 		rsp.Body.Code = err.(*common.MyError).Code()
 		return
 	}
 	rspObj.MRBuilds = mrb
+
 	//扫描角色城池
 	mrc, err := logic.RoleCityService.ScanBlock(reqObj)
 	if err != nil {

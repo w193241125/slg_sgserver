@@ -27,6 +27,9 @@ func Init() {
 	gameConfig.Skill.Load()
 	//加载所有建筑信息
 	logic.RoleBuildService.Load()
+	//加载所有城池信息
+	logic.RoleCityService.Load()
+
 	InitRouter()
 }
 

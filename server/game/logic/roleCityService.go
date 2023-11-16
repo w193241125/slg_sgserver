@@ -11,13 +11,41 @@ import (
 	"sgserver/server/game/global"
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
+	"sgserver/utils"
+	"sync"
 	"time"
 	"xorm.io/xorm"
 )
 
-var RoleCityService = &roleCityService{}
+var RoleCityService = &roleCityService{
+	posRC:  make(map[int]*data.MapRoleCity),
+	roleRC: make(map[int][]*data.MapRoleCity),
+}
 
 type roleCityService struct {
+	//key 位置 posID
+	posRC map[int]*data.MapRoleCity
+	//key 角色id
+	roleRC map[int][]*data.MapRoleCity
+	mutex  sync.RWMutex
+}
+
+func (r *roleCityService) Load() {
+	//查询所有角色城池
+	dbRC := make(map[int]*data.MapRoleCity)
+	db.Engine.Find(dbRC)
+
+	for _, v := range dbRC {
+		posId := global.ToPosition(v.X, v.Y)
+		r.posRC[posId] = v
+		_, ok := r.roleRC[v.RId]
+		if !ok {
+			r.roleRC[v.RId] = make([]*data.MapRoleCity, 0)
+		} else {
+			r.roleRC[v.RId] = append(r.roleRC[v.RId], v)
+		}
+	}
+
 }
 
 func (r *roleCityService) InitCity(rid int, nickname string, req *net.WsMsgReq) error {
@@ -106,5 +134,25 @@ func (r *roleCityService) GetRoleCity(rid int) ([]model.MapRoleCity, error) {
 }
 
 func (r *roleCityService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleCity, error) {
+	x := req.X
+	y := req.Y
+	length := req.Length
+	var mrcs []model.MapRoleCity
+	if x < 0 || x >= global.MapWith || y < 0 || y >= global.MapHeight {
+		return mrcs, nil
+	}
+	maxX := utils.MinInt(global.MapWith, x+length-1)
+	maxY := utils.MinInt(global.MapHeight, y+length-1)
+	for i := x - length; i <= maxX; i++ {
+		for j := y - length; j <= maxY; j++ {
+			posId := global.ToPosition(i, j)
+			mrb, ok := r.posRC[posId]
+			if ok {
+				mrcs = append(mrcs, mrb.ToModel().(model.MapRoleCity))
+			}
+
+		}
+	}
+	return mrcs, nil
 	return nil, nil
 }
