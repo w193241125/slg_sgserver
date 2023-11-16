@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"sgserver/constant"
 	"sgserver/net"
+	"sgserver/server/common"
 	"sgserver/server/game/gameConfig"
+	"sgserver/server/game/logic"
 	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
 )
@@ -17,6 +20,7 @@ func (n *nationMapController) Router(router *net.Router) {
 	g := router.Group("nationMap")
 	g.Use(middleware.Log())
 	g.AddRouter("config", n.config)
+	g.AddRouter("scanBlock", n.scanBlock)
 }
 func (n *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	//reqObj := &model.ConfigReq{}
@@ -38,5 +42,36 @@ func (n *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	rsp.Body.Seq = req.Body.Seq
 	rsp.Body.Name = req.Body.Name
 	rsp.Body.Code = constant.OK
+	rsp.Body.Msg = rspObj
+}
+
+func (n *nationMapController) scanBlock(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
+	reqObj := &model.ScanBlockReq{}
+	rspObj := &model.ScanBlockRsp{}
+	mapstructure.Decode(req.Body.Msg, rspObj)
+	rsp.Body.Seq = req.Body.Seq
+	rsp.Body.Name = req.Body.Name
+	rsp.Body.Code = constant.OK
+
+	mrb, err := logic.RoleBuildService.ScanBlock(reqObj)
+	if err != nil {
+		rsp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	rspObj.MRBuilds = mrb
+	//扫描角色城池
+	mrc, err := logic.RoleCityService.ScanBlock(reqObj)
+	if err != nil {
+		rsp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	rspObj.MCBuilds = mrc
+	//扫描玩家军队
+	armys, err := logic.ArmyService.ScanBlock(reqObj)
+	if err != nil {
+		rsp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	rspObj.Armys = armys
 	rsp.Body.Msg = rspObj
 }

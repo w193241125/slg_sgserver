@@ -2,6 +2,7 @@ package gameConfig
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 )
 
@@ -23,7 +24,9 @@ type mapBuildConf struct {
 	cfgMap map[int8][]cfg
 }
 
-var MapBuildConf = &mapBuildConf{}
+var MapBuildConf = &mapBuildConf{
+	cfgMap: make(map[int8][]cfg),
+}
 
 const mapBuildConfFile = "/conf/game/map_build.json"
 
@@ -47,6 +50,25 @@ func (m *mapBuildConf) Load() {
 	}
 	err = json.Unmarshal(data, m)
 	if err != nil {
+		log.Println("json格式不正确,解析失败")
 		panic(err)
 	}
+	for _, v := range m.Cfg {
+		_, ok := m.cfgMap[v.Type]
+		if !ok {
+			m.cfgMap[v.Type] = make([]cfg, 0)
+		} else {
+			m.cfgMap[v.Type] = append(m.cfgMap[v.Type], v)
+		}
+	}
+}
+
+func (m *mapBuildConf) BuildConfig(buildType int8, level int8) *cfg {
+	cfgs := m.cfgMap[buildType]
+	for _, v := range cfgs {
+		if v.Level == level {
+			return &v
+		}
+	}
+	return nil
 }
