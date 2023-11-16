@@ -48,7 +48,7 @@ func (n *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 func (n *nationMapController) scanBlock(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	reqObj := &model.ScanBlockReq{}
 	rspObj := &model.ScanBlockRsp{}
-	mapstructure.Decode(req.Body.Msg, rspObj)
+	mapstructure.Decode(req.Body.Msg, reqObj)
 	rsp.Body.Seq = req.Body.Seq
 	rsp.Body.Name = req.Body.Name
 	rsp.Body.Code = constant.OK
