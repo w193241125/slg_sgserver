@@ -5,6 +5,7 @@ import (
 	"sgserver/net"
 	"sgserver/server/common"
 	"sgserver/server/game/logic"
+	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 )
@@ -16,7 +17,8 @@ type skillController struct {
 
 func (sh *skillController) Router(r *net.Router) {
 	g := r.Group("skill")
-	g.AddRouter("list", sh.list)
+	g.Use(middleware.Log())
+	g.AddRouter("list", sh.list, middleware.CheckRole())
 }
 
 func (sh *skillController) list(req *net.WsMsgReq, rsp *net.WsMsgRsp) {

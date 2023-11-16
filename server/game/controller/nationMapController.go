@@ -4,6 +4,7 @@ import (
 	"sgserver/constant"
 	"sgserver/net"
 	"sgserver/server/game/gameConfig"
+	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
 )
 
@@ -14,6 +15,7 @@ type nationMapController struct {
 
 func (n *nationMapController) Router(router *net.Router) {
 	g := router.Group("nationMap")
+	g.Use(middleware.Log())
 	g.AddRouter("config", n.config)
 }
 func (n *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgRsp) {

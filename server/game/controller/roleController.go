@@ -6,6 +6,7 @@ import (
 	"sgserver/net"
 	"sgserver/server/common"
 	"sgserver/server/game/logic"
+	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 	"sgserver/utils"
@@ -18,8 +19,9 @@ type RoleController struct {
 
 func (r *RoleController) Router(router *net.Router) {
 	g := router.Group("role")
+	g.Use(middleware.Log())
 	g.AddRouter("enterServer", r.enterServer)
-	g.AddRouter("myProperty", r.myProperty)
+	g.AddRouter("myProperty", r.myProperty, middleware.CheckRole())
 	g.AddRouter("posTagList", r.posTagList)
 }
 

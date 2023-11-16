@@ -6,6 +6,7 @@ import (
 	"sgserver/net"
 	"sgserver/server/common"
 	"sgserver/server/game/logic"
+	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 )
@@ -17,7 +18,8 @@ type ArmyController struct {
 
 func (a *ArmyController) Router(router *net.Router) {
 	g := router.Group("army")
-	g.AddRouter("myList", a.mylist)
+	g.Use(middleware.Log())
+	g.AddRouter("myList", a.mylist, middleware.CheckRole())
 }
 
 func (a *ArmyController) mylist(req *net.WsMsgReq, rsp *net.WsMsgRsp) {

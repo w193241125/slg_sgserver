@@ -5,6 +5,7 @@ import (
 	"sgserver/net"
 	"sgserver/server/common"
 	"sgserver/server/game/logic"
+	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 )
@@ -16,7 +17,8 @@ type GeneralController struct {
 
 func (gc *GeneralController) Router(router *net.Router) {
 	g := router.Group("general")
-	g.AddRouter("myGenerals", gc.myGenerals)
+	g.Use(middleware.Log())
+	g.AddRouter("myGenerals", gc.myGenerals, middleware.CheckRole())
 }
 
 func (gc *GeneralController) myGenerals(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
