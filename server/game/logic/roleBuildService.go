@@ -85,7 +85,7 @@ func (r *roleBuildService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleBu
 	x := req.X
 	y := req.Y
 	length := req.Length
-	var mrbs []model.MapRoleBuild
+	var mrbs = make([]model.MapRoleBuild, 0)
 	if x < 0 || x >= global.MapWith || y < 0 || y >= global.MapHeight {
 		return mrbs, nil
 	}

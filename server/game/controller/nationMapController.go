@@ -9,6 +9,7 @@ import (
 	"sgserver/server/game/logic"
 	"sgserver/server/game/middleware"
 	"sgserver/server/game/model"
+	"sgserver/server/game/model/data"
 )
 
 var DefaultNationMapController = &nationMapController{}
@@ -20,7 +21,7 @@ func (n *nationMapController) Router(router *net.Router) {
 	g := router.Group("nationMap")
 	g.Use(middleware.Log())
 	g.AddRouter("config", n.config)
-	g.AddRouter("scanBlock", n.scanBlock)
+	g.AddRouter("scanBlock", n.scanBlock, middleware.CheckRole())
 }
 func (n *nationMapController) config(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	//reqObj := &model.ConfigReq{}
@@ -68,8 +69,11 @@ func (n *nationMapController) scanBlock(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		return
 	}
 	rspObj.MCBuilds = mrc
+
+	role, _ := req.Conn.GetProperty("role")
+	roleId := role.(*data.RoleModel).RId
 	//扫描玩家军队
-	armys, err := logic.ArmyService.ScanBlock(reqObj)
+	armys, err := logic.ArmyService.ScanBlock(roleId, reqObj)
 	if err != nil {
 		rsp.Body.Code = err.(*common.MyError).Code()
 		return

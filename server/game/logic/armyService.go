@@ -5,13 +5,18 @@ import (
 	"sgserver/constant"
 	"sgserver/db"
 	"sgserver/server/common"
+	"sgserver/server/game/global"
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
+	"sgserver/utils"
+	"sync"
 )
 
 var ArmyService = &armyService{}
 
 type armyService struct {
+	passBy         sync.RWMutex
+	passByPosArmys map[int]map[int]*data.Army // key : posId,armyId
 }
 
 func (r *armyService) GetArmys(rid int) ([]model.Army, error) {
@@ -45,6 +50,40 @@ func (r *armyService) GetArmysByCity(rid int, cid int) ([]model.Army, error) {
 	return modelMrs, nil
 }
 
-func (r *armyService) ScanBlock(req *model.ScanBlockReq) ([]model.Army, error) {
-	return nil, nil
+func (a *armyService) ScanBlock(roleId int, req *model.ScanBlockReq) ([]model.Army, error) {
+	x := req.X
+	y := req.Y
+	length := req.Length
+	out := make([]model.Army, 0)
+	if x < 0 || x >= global.MapWith || y < 0 || y >= global.MapHeight {
+		return out, nil
+	}
+	maxX := utils.MinInt(global.MapWith, x+length-1)
+	maxY := utils.MinInt(global.MapHeight, y+length-1)
+
+	a.passBy.RLock()
+	defer a.passBy.RUnlock()
+
+	for i := x - length; i <= maxX; i++ {
+		for j := y - length; j <= maxY; j++ {
+			posId := global.ToPosition(i, j)
+			armys, ok := a.passByPosArmys[posId]
+			if ok {
+				//是否在视野内
+				is := armyIsInView(roleId, i, j)
+				if is {
+					continue
+				}
+				for _, army := range armys {
+					out = append(out, army.ToModel().(model.Army))
+				}
+			}
+
+		}
+	}
+	return out, nil
+}
+
+func armyIsInView(rid, x, y int) bool {
+	return true
 }

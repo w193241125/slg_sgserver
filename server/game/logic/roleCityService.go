@@ -154,5 +154,4 @@ func (r *roleCityService) ScanBlock(req *model.ScanBlockReq) ([]model.MapRoleCit
 		}
 	}
 	return mrcs, nil
-	return nil, nil
 }
