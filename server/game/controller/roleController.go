@@ -1,8 +1,11 @@
 package controller
 
 import (
+	"encoding/json"
 	"github.com/mitchellh/mapstructure"
+	"log"
 	"sgserver/constant"
+	"sgserver/db"
 	"sgserver/net"
 	"sgserver/server/common"
 	"sgserver/server/game/logic"
@@ -10,6 +13,7 @@ import (
 	"sgserver/server/game/model"
 	"sgserver/server/game/model/data"
 	"sgserver/utils"
+	"time"
 )
 
 var DefaultRoleController = &RoleController{}
@@ -20,6 +24,7 @@ type RoleController struct {
 func (r *RoleController) Router(router *net.Router) {
 	g := router.Group("role")
 	g.Use(middleware.Log())
+	g.AddRouter("create", r.create)
 	g.AddRouter("enterServer", r.enterServer)
 	g.AddRouter("myProperty", r.myProperty, middleware.CheckRole())
 	g.AddRouter("posTagList", r.posTagList)
@@ -121,4 +126,39 @@ func (r *RoleController) posTagList(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	rspObj.PosTags = pts
 	rsp.Body.Code = constant.OK
 	rsp.Body.Msg = rspObj
+}
+
+func (r *RoleController) create(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
+	rspObj := &model.CreateRoleRsp{}
+	reqObj := &model.CreateRoleReq{}
+	mapstructure.Decode(req.Body.Msg, reqObj)
+
+	rsp.Body.Seq = req.Body.Seq
+	rsp.Body.Name = req.Body.Name
+	cr, _ := json.Marshal(reqObj)
+	log.Println(string(cr))
+	role := &data.RoleModel{}
+	ok, err := db.Engine.Where("uid=?", reqObj.UId).Get(role)
+	if err != nil {
+		rsp.Body.Code = constant.DBError
+		return
+	}
+	if ok {
+		rsp.Body.Code = constant.RoleAlreadyCreate
+		return
+	}
+	role.UId = reqObj.UId
+	role.Sex = reqObj.Sex
+	role.NickName = reqObj.NickName
+	role.Balance = 0
+	role.HeadId = reqObj.HeadId
+	role.CreatedAt = time.Now()
+	role.LoginTime = time.Now()
+	if _, err := db.Engine.Insert(role); err != nil {
+		rsp.Body.Code = constant.DBError
+		return
+	}
+	rspObj.Role = role.ToModel().(model.Role)
+	rsp.Body.Code = constant.OK
+	rsp.Body.Msg = role
 }
