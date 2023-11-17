@@ -25,6 +25,9 @@ func Init() {
 	general.General.Load()
 	//记载技能配置
 	gameConfig.Skill.Load()
+
+	//初始化前加载信息
+	logic.BeforeInit()
 	//加载所有建筑信息
 	logic.RoleBuildService.Load()
 	//加载所有城池信息

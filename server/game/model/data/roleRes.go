@@ -1,6 +1,10 @@
 package data
 
-import "sgserver/server/game/model"
+import (
+	"log"
+	"sgserver/db"
+	"sgserver/server/game/model"
+)
 
 type RoleRes struct {
 	Id     int `xorm:"id pk autoincr"`
@@ -26,11 +30,51 @@ func (r *RoleRes) ToModel() interface{} {
 	p.Wood = r.Wood
 	p.Decree = r.Decree
 
-	p.GoldYield = 100
-	p.GrainYield = 100
-	p.StoneYield = 100
-	p.IronYield = 100
-	p.WoodYield = 100
+	yield := GetYield(r.RId)
+	p.GoldYield = yield.Gold
+	p.GrainYield = yield.Grain
+	p.StoneYield = yield.Stone
+	p.IronYield = yield.Iron
+	p.WoodYield = yield.Wood
 	p.DepotCapacity = 10000
 	return p
+}
+
+// 资源产量
+type Yield struct {
+	Wood  int
+	Iron  int
+	Stone int
+	Grain int
+	Gold  int
+}
+
+var RoleResDao = &roleResDao{
+	rrChan: make(chan *RoleRes, 100),
+}
+
+func init() {
+	go RoleResDao.run()
+}
+
+func (r *roleResDao) run() {
+	for {
+		select {
+		case rr := <-r.rrChan:
+			//更新操作
+			_, err := db.Engine.Table(new(RoleRes)).ID(rr.Id).Cols("wood", "iron", "stone", "grain", "gold").Update(rr)
+			if err != nil {
+				log.Println("更新角色资源失败", err)
+			}
+
+		}
+	}
+}
+
+type roleResDao struct {
+	rrChan chan *RoleRes
+}
+
+func (r *RoleRes) SyncExecute() {
+	RoleResDao.rrChan <- r
 }

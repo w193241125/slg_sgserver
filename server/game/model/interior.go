@@ -12,3 +12,5 @@ type CollectionRsp struct {
 	CurTimes int8  `json:"cur_times"`
 	NextTime int64 `json:"next_time"`
 }
+type CollectionReq struct {
+}

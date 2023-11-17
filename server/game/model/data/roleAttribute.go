@@ -1,6 +1,8 @@
 package data
 
 import (
+	"log"
+	"sgserver/db"
 	"sgserver/server/game/model"
 	"time"
 )
@@ -18,4 +20,31 @@ type RoleAttribute struct {
 
 func (r *RoleAttribute) TableName() string {
 	return "role_attribute"
+}
+
+var RoleAttrDao = &roleAttrDao{
+	raChan: make(chan *RoleAttribute, 100),
+}
+
+type roleAttrDao struct {
+	raChan chan *RoleAttribute
+}
+
+func init() {
+	go RoleAttrDao.run()
+}
+
+func (r *roleAttrDao) run() {
+	for {
+		select {
+		case ra := <-r.raChan:
+			upd, err := db.Engine.Table(new(RoleAttribute)).ID(ra.Id).Cols("parent_id", "collect_times", "last_collect_time", "pos_tags").Update(ra)
+			if err != nil || upd == 0 {
+				log.Println("角色征收信息更新失败", err, upd)
+			}
+		}
+	}
+}
+func (r *RoleAttribute) SyncExecute() {
+	RoleAttrDao.raChan <- r
 }
