@@ -18,8 +18,20 @@ var RoleAttrService = &roleAttrService{
 }
 
 type roleAttrService struct {
-	attrs map[int]*data.RoleAttribute
+	attrs map[int]*data.RoleAttribute // rid->rattr  用户id 对应的用户属性
 	mutex sync.RWMutex
+}
+
+func (r *roleAttrService) Load() {
+	ras := make([]*data.RoleAttribute, 0)
+	err := db.Engine.Table(new(data.RoleAttribute)).Find(&ras)
+	if err != nil {
+		log.Println("RoleAttribute Load err", err)
+		return
+	}
+	for _, ra := range ras {
+		r.attrs[ra.RId] = ra
+	}
 }
 
 func (r *roleAttrService) TryCreate(rid int, req *net.WsMsgReq) error {
@@ -83,4 +95,16 @@ func (r *roleAttrService) GetTagList(rid int) ([]model.PosTag, error) {
 		}
 	}
 	return posTags, nil
+}
+
+func (r *roleAttrService) Get(rid int) *data.RoleAttribute {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	ra, ok := r.attrs[rid]
+	if ok {
+		return ra
+	}
+
+	return nil
+
 }

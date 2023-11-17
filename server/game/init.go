@@ -29,6 +29,8 @@ func Init() {
 	logic.RoleBuildService.Load()
 	//加载所有城池信息
 	logic.RoleCityService.Load()
+	//加载所有角色属性
+	logic.RoleAttrService.Load()
 
 	InitRouter()
 }
@@ -40,4 +42,5 @@ func InitRouter() {
 	controller.DefalArmyController.Router(Router)
 	controller.DefaultWarController.Router(Router)
 	controller.DefaultSkillController.Router(Router)
+	controller.InteriorController.Router(Router)
 }
