@@ -66,7 +66,7 @@ func (r *roleCityService) InitCity(rid int, nickname string, req *net.WsMsgReq) 
 			//初始化
 			roleCity.X = rand.Intn(global.MapWith)
 			roleCity.Y = rand.Intn(global.MapHeight)
-			if IsCanBuild(roleCity.X, roleCity.Y) {
+			if r.IsCanBuild(roleCity.X, roleCity.Y) {
 				roleCity.RId = rid
 				roleCity.Name = nickname
 				roleCity.CurDurable = gameConfig.Base.City.Durable
@@ -94,7 +94,7 @@ func (r *roleCityService) InitCity(rid int, nickname string, req *net.WsMsgReq) 
 	return nil
 }
 
-func IsCanBuild(x int, y int) bool {
+func (r *roleCityService) IsCanBuild(x int, y int) bool {
 	confs := gameConfig.MapRes.Confs
 	pIndex := global.ToPosition(x, y)
 	_, ok := confs[pIndex]
@@ -102,6 +102,7 @@ func IsCanBuild(x int, y int) bool {
 		return false
 	}
 	sysBuild := gameConfig.MapRes.SysBuild
+	//系统城池5格之内不能建立城池
 	for _, v := range sysBuild {
 		if v.Type == gameConfig.MapBuildSysFortress {
 			if x >= v.X-5 &&
@@ -112,6 +113,20 @@ func IsCanBuild(x int, y int) bool {
 			}
 		}
 
+	}
+	//城池1格之内不能超过边界
+	if x+1 >= global.MapWith && x < 1 && y+1 >= global.MapHeight && y < 1 {
+		return false
+	}
+	//玩家城池5格之内不能建立城池
+	for i := x - 5; i <= x+5; i++ {
+		for j := y - 5; j <= y+5; j++ {
+			posId := global.ToPosition(i, j)
+			_, ok := r.posRC[posId]
+			if ok {
+				return false
+			}
+		}
 	}
 
 	return true
