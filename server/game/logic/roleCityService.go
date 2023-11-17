@@ -81,6 +81,15 @@ func (r *roleCityService) InitCity(rid int, nickname string, req *net.WsMsgReq) 
 					log.Println("城池初始化失败", err)
 					return common.New(constant.DBError, "插入城池初始化信息失败")
 				}
+				//初始化完成后, 新建的城池,加入缓存当中
+				posId := global.ToPosition(roleCity.X, roleCity.Y)
+				r.posRC[posId] = roleCity
+				_, ok := r.roleRC[rid]
+				if !ok {
+					r.roleRC[rid] = make([]*data.MapRoleCity, 0)
+				} else {
+					r.roleRC[rid] = append(r.roleRC[rid], roleCity)
+				}
 				//初始化城池设施
 				if err := CityFacilityService.TryCreate(roleCity.CityId, rid, req); err != nil {
 					log.Println("城池设施初始化失败", err)

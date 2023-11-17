@@ -52,6 +52,8 @@ func (r *RoleController) enterServer(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	uid := claim.Uid
 	err = logic.RoleService.EnterServer(uid, rspObj, req)
 	if err != nil {
+		rspObj.Time = time.Now().UnixNano() / 1e6
+		rsp.Body.Msg = rspObj
 		rsp.Body.Code = err.(*common.MyError).Code()
 		return
 	}
