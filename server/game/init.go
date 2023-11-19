@@ -28,10 +28,13 @@ func Init() {
 
 	//初始化前加载信息
 	logic.BeforeInit()
+
 	//加载所有建筑信息
 	logic.RoleBuildService.Load()
 	//加载所有城池信息
 	logic.RoleCityService.Load()
+	//加载联盟信息(必须先加载联盟后再加载角色属性,否则角色属性里面会没有联盟信息)
+	logic.CoalitionService.Load()
 	//加载所有角色属性
 	logic.RoleAttrService.Load()
 
@@ -46,4 +49,5 @@ func InitRouter() {
 	controller.DefaultWarController.Router(Router)
 	controller.DefaultSkillController.Router(Router)
 	controller.InteriorController.Router(Router)
+	controller.UnionController.Router(Router)
 }

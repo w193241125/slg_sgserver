@@ -102,3 +102,18 @@ func (r *roleService) GetRoleRes(rid int) (model.RoleRes, error) {
 
 	return model.RoleRes{}, common.New(constant.RoleNotExist, "角色资源不存在")
 }
+
+func (r *roleService) Get(rid int) *data.RoleModel {
+	//根据用户ID查询对应的游戏角色..
+	role := &data.RoleModel{}
+
+	get, err := db.Engine.Table(role).Where("rid=?", rid).Get(role)
+	if err != nil {
+		log.Println("查询角色出错", err)
+		return nil
+	}
+	if get {
+		return role
+	}
+	return nil
+}

@@ -29,8 +29,18 @@ func (r *roleAttrService) Load() {
 		log.Println("RoleAttribute Load err", err)
 		return
 	}
-	for _, ra := range ras {
-		r.attrs[ra.RId] = ra
+	for _, v := range ras {
+		r.attrs[v.RId] = v
+	}
+	//查询所有联盟进行匹配
+	uns := CoalitionService.ListCoalition()
+	for _, un := range uns {
+		for _, rid := range un.MemberArray {
+			ra, ok := r.attrs[rid]
+			if ok {
+				ra.UnionId = un.Id
+			}
+		}
 	}
 }
 
@@ -43,9 +53,9 @@ func (r *roleAttrService) TryCreate(rid int, req *net.WsMsgReq) error {
 		return common.New(constant.DBError, "查询数据库rid出错")
 	}
 	if get {
-		r.mutex.Lock()
-		r.attrs[rid] = role
-		defer r.mutex.Unlock()
+		//r.mutex.Lock()
+		//r.attrs[rid] = role
+		//defer r.mutex.Unlock()
 		return nil
 	} else {
 		role.RId = rid
@@ -107,4 +117,14 @@ func (r *roleAttrService) Get(rid int) *data.RoleAttribute {
 
 	return nil
 
+}
+
+func (r *roleAttrService) GetUnion(rid int) int {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	ra, ok := r.attrs[rid]
+	if ok {
+		return ra.UnionId
+	}
+	return 0
 }
